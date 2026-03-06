@@ -1,0 +1,24 @@
+RewriteEngine On
+RewriteBase /v3_1/backend/
+
+# ========================================
+# CORS Preflight
+# ========================================
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# ========================================
+# Module Routing — Clean URLs
+# ========================================
+
+# /api/core/* → core/index.php
+RewriteRule ^api/core/(.*)$ core/index.php?route=$1 [QSA,L]
+
+# /api/hrm/* → hrm/index.php
+RewriteRule ^api/hrm/(.*)$ hrm/index.php?route=$1 [QSA,L]
+
+# /api/pay/* → pay/index.php
+RewriteRule ^api/pay/(.*)$ pay/index.php?route=$1 [QSA,L]
+
+# /api/acc/* → acc/index.php
+RewriteRule ^api/acc/(.*)$ acc/index.php?route=$1 [QSA,L]
