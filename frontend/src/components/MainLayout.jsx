@@ -540,9 +540,12 @@ export default function MainLayout() {
                     flex: 1,
                     pt: { xs: '80px', md: '88px' },  // AppBar 64px + padding
                     pb: isMobile ? '80px' : 3,  // Bottom bar space (mobile)
-                    px: { xs: 2, md: 3 },
+                    px: { xs: 1.5, md: 3 },
                     minHeight: '100vh',
+                    maxWidth: '100%',
+                    overflowX: 'hidden',
                     transition: 'margin 0.2s',
+                    boxSizing: 'border-box',
                 }}
             >
                 <Outlet />

@@ -10,6 +10,17 @@ import DashboardPage from './views/DashboardPage';
 import CheckInPage from './views/CheckInPage';
 import RequestsPage from './views/RequestsPage';
 import ProfilePage from './views/ProfilePage';
+import SettingsPage from './views/SettingsPage';
+
+// HRM Pages
+import HrmEmployeesPage from './views/HrmEmployeesPage';
+import HrmTimeReportPage from './views/HrmTimeReportPage';
+import HrmApprovalsPage from './views/HrmApprovalsPage';
+import HrmSchedulesPage from './views/HrmSchedulesPage';
+import HrmHolidaysPage from './views/HrmHolidaysPage';
+import HrmLeaveMgmtPage from './views/HrmLeaveMgmtPage';
+import HrmEvaluationPage from './views/HrmEvaluationPage';
+import HrmReportsPage from './views/HrmReportsPage';
 
 // Layout
 import MainLayout from './components/MainLayout';
@@ -80,23 +91,17 @@ function App() {
               <Route path="profile" element={<ProfilePage />} />
 
               {/* HRM */}
-              <Route path="hrm/employees" element={<PlaceholderPage title="จัดการพนักงาน" />} />
-              <Route path="hrm/time-report" element={<PlaceholderPage title="รายงานเวลา" />} />
-              <Route path="hrm/schedules" element={<PlaceholderPage title="ตารางกะ" />} />
-              <Route path="hrm/holidays" element={<PlaceholderPage title="วันหยุด" />} />
-              <Route path="hrm/leave-mgmt" element={<PlaceholderPage title="จัดการสิทธิ์ลา" />} />
-              <Route path="hrm/approvals" element={<PlaceholderPage title="อนุมัติคำร้อง" />} />
-              <Route path="hrm/evaluation" element={<PlaceholderPage title="ประเมินผลงาน" />} />
-              <Route path="hrm/reports" element={<PlaceholderPage title="รายงานสรุป" />} />
+              <Route path="hrm/employees" element={<HrmEmployeesPage />} />
+              <Route path="hrm/time-report" element={<HrmTimeReportPage />} />
+              <Route path="hrm/schedules" element={<HrmSchedulesPage />} />
+              <Route path="hrm/holidays" element={<HrmHolidaysPage />} />
+              <Route path="hrm/leave-mgmt" element={<HrmLeaveMgmtPage />} />
+              <Route path="hrm/approvals" element={<HrmApprovalsPage />} />
+              <Route path="hrm/evaluation" element={<HrmEvaluationPage />} />
+              <Route path="hrm/reports" element={<HrmReportsPage />} />
 
               {/* Settings */}
-              <Route path="settings/company" element={<PlaceholderPage title="บริษัท" />} />
-              <Route path="settings/branch" element={<PlaceholderPage title="สาขา" />} />
-              <Route path="settings/org" element={<PlaceholderPage title="โครงสร้างองค์กร" />} />
-              <Route path="settings/permission" element={<PlaceholderPage title="สิทธิ์การเข้าถึง" />} />
-              <Route path="settings/menu" element={<PlaceholderPage title="โครงสร้างเมนู" />} />
-              <Route path="settings/config" element={<PlaceholderPage title="ค่าระบบ" />} />
-              <Route path="settings/admin" element={<PlaceholderPage title="ผู้ดูแลระบบ" />} />
+              <Route path="settings/*" element={<SettingsPage />} />
 
               {/* 404 */}
               <Route path="*" element={<PlaceholderPage title="404 — ไม่พบหน้านี้" />} />
