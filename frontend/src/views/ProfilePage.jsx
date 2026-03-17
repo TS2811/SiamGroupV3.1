@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { profileService } from '../services/api';
 import {
@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import {
     Edit, Save, Person, Business, CalendarMonth, History,
-    Badge, Visibility, Lock,
+    Badge, Visibility, Lock, CameraAlt,
 } from '@mui/icons-material';
 
 // ========================================
@@ -107,6 +107,11 @@ export default function ProfilePage() {
     // Snackbar
     const [snackbar, setSnackbar] = useState({ open: false, message: '' });
 
+    // Avatar upload
+    const avatarInputRef = useRef(null);
+    const [avatarUrl, setAvatarUrl] = useState(null);
+    const [avatarUploading, setAvatarUploading] = useState(false);
+
     // ========================================
     // Fetch profile
     // ========================================
@@ -117,6 +122,12 @@ export default function ProfilePage() {
             setProfile(data);
             setPhone(data?.phone || '');
             setEmail(data?.email || '');
+            // Set avatar URL
+            if (data?.avatar_url) {
+                setAvatarUrl(data.avatar_url.startsWith('gdrive://') 
+                    ? '/v3_1/backend/api/core/profile/avatar/view'
+                    : data.avatar_url);
+            }
         } catch (err) {
             console.error('Failed to fetch profile:', err);
         } finally {
@@ -166,6 +177,46 @@ export default function ProfilePage() {
             setEditing(false);
         } catch (err) {
             setSnackbar({ open: true, message: `❌ ${err.response?.data?.message || 'เกิดข้อผิดพลาด'}` });
+        }
+    };
+
+    // Avatar upload handler
+    const handleAvatarUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        
+        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!allowed.includes(file.type)) {
+            setSnackbar({ open: true, message: '❌ รองรับเฉพาะไฟล์ภาพ (JPEG, PNG, WebP, GIF)' });
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setSnackbar({ open: true, message: '❌ ขนาดไฟล์ต้องไม่เกิน 5MB' });
+            return;
+        }
+
+        setAvatarUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('avatar', file);
+            const res = await fetch('/v3_1/backend/api/core/profile/avatar', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-API-Key': 'sg_v3_api_key_2026_secure' },
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAvatarUrl(data.data?.avatar_url || URL.createObjectURL(file));
+                setSnackbar({ open: true, message: '✅ อัปโหลดรูปโปรไฟล์สำเร็จ' });
+            } else {
+                setSnackbar({ open: true, message: `❌ ${data.message || 'อัปโหลดไม่สำเร็จ'}` });
+            }
+        } catch (err) {
+            setSnackbar({ open: true, message: '❌ เกิดข้อผิดพลาดในการอัปโหลด' });
+        } finally {
+            setAvatarUploading(false);
+            if (avatarInputRef.current) avatarInputRef.current.value = '';
         }
     };
 
@@ -227,12 +278,33 @@ export default function ProfilePage() {
                 }} />
                 <CardContent sx={{ pt: 0, pb: 2, position: 'relative' }}>
                     <Stack direction="row" spacing={1.5} alignItems="flex-end" sx={{ mt: { xs: -4, sm: -5 } }}>
-                        <Avatar sx={{
-                            width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, border: '3px solid #fff',
-                            bgcolor: 'primary.main', fontSize: { xs: 22, sm: 28 }, fontWeight: 700, boxShadow: 2,
-                        }}>
-                            {nickname[0]?.toUpperCase()}
-                        </Avatar>
+                        {/* Hidden file input */}
+                        <input
+                            ref={avatarInputRef}
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={handleAvatarUpload}
+                        />
+                        <Box sx={{ position: 'relative', cursor: 'pointer' }} onClick={() => avatarInputRef.current?.click()}>
+                            <Avatar 
+                                src={avatarUrl} 
+                                sx={{
+                                    width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, border: '3px solid #fff',
+                                    bgcolor: 'primary.main', fontSize: { xs: 22, sm: 28 }, fontWeight: 700, boxShadow: 2,
+                                }}
+                            >
+                                {nickname[0]?.toUpperCase()}
+                            </Avatar>
+                            <Box sx={{
+                                position: 'absolute', bottom: 0, right: 0,
+                                bgcolor: 'primary.main', borderRadius: '50%', width: 24, height: 24,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                border: '2px solid #fff', boxShadow: 1,
+                            }}>
+                                {avatarUploading ? <CircularProgress size={12} sx={{ color: '#fff' }} /> : <CameraAlt sx={{ fontSize: 12, color: '#fff' }} />}
+                            </Box>
+                        </Box>
                         <Box sx={{ flex: 1, pt: { xs: 1, sm: 2 }, minWidth: 0 }}>
                             <Typography variant="subtitle1" fontWeight={700} fontSize={{ xs: 15, sm: 18 }} noWrap>
                                 {displayName}

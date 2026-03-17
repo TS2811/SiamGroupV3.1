@@ -4,23 +4,33 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import theme from './theme';
 
-// Pages
+// Core Pages
 import LoginPage from './views/LoginPage';
 import DashboardPage from './views/DashboardPage';
 import CheckInPage from './views/CheckInPage';
 import RequestsPage from './views/RequestsPage';
 import ProfilePage from './views/ProfilePage';
 import SettingsPage from './views/SettingsPage';
+import ErrorPage from './views/ErrorPage';
 
 // HRM Pages
-import HrmEmployeesPage from './views/HrmEmployeesPage';
-import HrmTimeReportPage from './views/HrmTimeReportPage';
-import HrmApprovalsPage from './views/HrmApprovalsPage';
-import HrmSchedulesPage from './views/HrmSchedulesPage';
-import HrmHolidaysPage from './views/HrmHolidaysPage';
-import HrmLeaveMgmtPage from './views/HrmLeaveMgmtPage';
-import HrmEvaluationPage from './views/HrmEvaluationPage';
-import HrmReportsPage from './views/HrmReportsPage';
+import HrmEmployeesPage from './views/viewsHRM/HrmEmployeesPage';
+import HrmTimeReportPage from './views/viewsHRM/HrmTimeReportPage';
+import HrmApprovalsPage from './views/viewsHRM/HrmApprovalsPage';
+import HrmSchedulesPage from './views/viewsHRM/HrmSchedulesPage';
+import HrmHolidaysPage from './views/viewsHRM/HrmHolidaysPage';
+import HrmLeaveMgmtPage from './views/viewsHRM/HrmLeaveMgmtPage';
+import HrmEvaluationPage from './views/viewsHRM/HrmEvaluationPage';
+import HrmReportsPage from './views/viewsHRM/HrmReportsPage';
+
+// Payroll Pages
+import PayPayrollPage from './views/viewsPay/PayPayrollPage';
+import PayLoansPage from './views/viewsPay/PayLoansPage';
+import PayCertificatesPage from './views/viewsPay/PayCertificatesPage';
+import PayBonusesPage from './views/viewsPay/PayBonusesPage';
+
+// ACC Module (iframe-based — loads standalone ACC app)
+import AccIframePage from './views/viewsACC/AccIframePage';
 
 // Layout
 import MainLayout from './components/MainLayout';
@@ -58,16 +68,6 @@ function LoginRoute() {
   return <LoginPage />;
 }
 
-// Placeholder page
-function PlaceholderPage({ title }) {
-  return (
-    <div style={{ padding: 24 }}>
-      <h2>{title}</h2>
-      <p style={{ color: '#6B7280' }}>หน้านี้อยู่ระหว่างการพัฒนา...</p>
-    </div>
-  );
-}
-
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -100,12 +100,21 @@ function App() {
               <Route path="hrm/evaluation" element={<HrmEvaluationPage />} />
               <Route path="hrm/reports" element={<HrmReportsPage />} />
 
+              {/* Payroll */}
+              <Route path="pay/payroll" element={<PayPayrollPage />} />
+              <Route path="pay/loans" element={<PayLoansPage />} />
+              <Route path="pay/certificates" element={<PayCertificatesPage />} />
+              <Route path="pay/bonuses" element={<PayBonusesPage />} />
+
               {/* Settings */}
               <Route path="settings/*" element={<SettingsPage />} />
 
-              {/* 404 */}
-              <Route path="*" element={<PlaceholderPage title="404 — ไม่พบหน้านี้" />} />
+              {/* ACC Module (iframe → standalone ACC app) */}
+              <Route path="acc/*" element={<AccIframePage />} />
             </Route>
+
+            {/* 404 — full screen, no layout */}
+            <Route path="*" element={<ErrorPage />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
@@ -114,3 +123,4 @@ function App() {
 }
 
 export default App;
+

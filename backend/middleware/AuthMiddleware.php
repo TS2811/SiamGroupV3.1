@@ -9,6 +9,7 @@
 
 require_once __DIR__ . '/../vendor/firebase/php-jwt/src/JWT.php';
 require_once __DIR__ . '/../vendor/firebase/php-jwt/src/Key.php';
+require_once __DIR__ . '/../vendor/firebase/php-jwt/src/JWTExceptionWithPayloadInterface.php';
 require_once __DIR__ . '/../vendor/firebase/php-jwt/src/ExpiredException.php';
 require_once __DIR__ . '/../vendor/firebase/php-jwt/src/SignatureInvalidException.php';
 require_once __DIR__ . '/../vendor/firebase/php-jwt/src/BeforeValidException.php';

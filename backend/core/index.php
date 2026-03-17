@@ -114,8 +114,9 @@ switch ($group) {
                 // ดึง menu_tree + permissions ด้วย (เพื่อให้ refresh page แล้วเมนูไม่หาย)
                 $levelId = $user['level_id'] ?? null;
                 $userId  = (int)$decoded->sub;
-                $menuTree    = $userModel->getMenuTree($levelId, $userId);
-                $permissions = $userModel->getPermissions($levelId, $userId);
+                $isAdmin = (bool)($user['is_admin'] ?? false);
+                $menuTree    = $userModel->getMenuTree($levelId, $userId, $isAdmin);
+                $permissions = $userModel->getPermissions($levelId, $userId, $isAdmin);
 
                 jsonSuccess([
                     'user'        => $user,
@@ -449,6 +450,95 @@ switch ($group) {
                 $year = (int)($_GET['year'] ?? date('Y'));
                 $history = $profileModel->getOTHistory($employeeId, $year);
                 jsonSuccess(['ot_history' => $history]);
+                break;
+
+            // POST /api/core/profile/avatar — อัปโหลดรูปโปรไฟล์ → Google Drive
+            case 'avatar':
+                if ($method === 'POST') {
+                    if (empty($_FILES['avatar'])) jsonError('กรุณาแนบรูป', 'VALIDATION', 422);
+
+                    $file = $_FILES['avatar'];
+                    $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+                    if (!in_array($file['type'], $allowed)) {
+                        jsonError('รองรับเฉพาะไฟล์ภาพ (JPEG, PNG, WebP, GIF)', 'VALIDATION', 422);
+                    }
+                    if ($file['size'] > 5 * 1024 * 1024) {
+                        jsonError('ขนาดไฟล์ต้องไม่เกิน 5MB', 'VALIDATION', 422);
+                    }
+
+                    $avatarUrl = '';
+
+                    // Try Google Drive first
+                    $gdriveHelper = __DIR__ . '/../gdrive_helper.php';
+                    if (file_exists($gdriveHelper)) {
+                        try {
+                            require_once $gdriveHelper;
+                            $ext = pathinfo($file['name'], PATHINFO_EXTENSION) ?: 'jpg';
+                            $fileName = 'avatar_' . $userId . '_' . time() . '.' . $ext;
+                            $avatarUrl = gdrive_uploadFile($file['tmp_name'], $fileName, ['PROFILE', 'avatars']);
+
+                            // Delete old avatar from GDrive if exists
+                            $oldAvatar = $profileModel->getAvatarUrl($userId);
+                            if ($oldAvatar && str_starts_with($oldAvatar, 'gdrive://')) {
+                                try { gdrive_deleteFile($oldAvatar); } catch (Exception $e) {}
+                            }
+                        } catch (Exception $e) {
+                            error_log('GDrive avatar upload failed: ' . $e->getMessage());
+                            $avatarUrl = '';
+                        }
+                    }
+
+                    // Fallback: local storage
+                    if (empty($avatarUrl)) {
+                        $uploadDir = __DIR__ . '/../uploads/avatars/';
+                        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+                        $ext = pathinfo($file['name'], PATHINFO_EXTENSION) ?: 'jpg';
+                        $newName = 'avatar_' . $userId . '_' . time() . '.' . $ext;
+                        if (!move_uploaded_file($file['tmp_name'], $uploadDir . $newName)) {
+                            jsonError('อัปโหลดรูปไม่สำเร็จ', 'UPLOAD_ERROR', 500);
+                        }
+                        $avatarUrl = '/v3_1/backend/uploads/avatars/' . $newName;
+                    }
+
+                    // Update DB
+                    $profileModel->updateAvatarUrl($userId, $avatarUrl);
+
+                    // Return viewable URL
+                    $viewUrl = $avatarUrl;
+                    if (str_starts_with($avatarUrl, 'gdrive://')) {
+                        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+                        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                        $viewUrl = $protocol . $host . '/v3_1/backend/api/core/profile/avatar/view';
+                    }
+
+                    jsonSuccess(['avatar_url' => $viewUrl], 'อัปโหลดรูปโปรไฟล์สำเร็จ');
+                } elseif ($method === 'GET') {
+                    // GET /api/core/profile/avatar — redirect to view
+                    $subAction = $segments[2] ?? '';
+                    if ($subAction === 'view') {
+                        // Stream avatar from GDrive or local
+                        $avatarUrl = $profileModel->getAvatarUrl($userId);
+                        if (!$avatarUrl) jsonError('ไม่มีรูปโปรไฟล์', 'NOT_FOUND', 404);
+
+                        if (str_starts_with($avatarUrl, 'gdrive://')) {
+                            require_once __DIR__ . '/../gdrive_helper.php';
+                            gdrive_streamFile($avatarUrl);
+                            exit;
+                        } else {
+                            // Local file or external URL
+                            $fullPath = $_SERVER['DOCUMENT_ROOT'] . $avatarUrl;
+                            if (file_exists($fullPath)) {
+                                header('Content-Type: ' . (mime_content_type($fullPath) ?: 'image/jpeg'));
+                                readfile($fullPath);
+                                exit;
+                            }
+                            jsonError('ไม่พบไฟล์รูป', 'NOT_FOUND', 404);
+                        }
+                    }
+                    jsonError('Route not found', 'NOT_FOUND', 404);
+                } else {
+                    jsonError('Method not allowed', 'METHOD_NOT_ALLOWED', 405);
+                }
                 break;
 
             default:

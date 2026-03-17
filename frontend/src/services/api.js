@@ -268,3 +268,59 @@ export const hrmService = {
     getLeaveReport: (params = {}) => api.get('/hrm/reports/leave', { params }),
     getAttendanceReport: (params = {}) => api.get('/hrm/reports/attendance', { params }),
 };
+
+// ========================================
+// Payroll Service (เงินเดือน)
+// ========================================
+export const payService = {
+    // Periods (รอบเงินเดือน)
+    getPeriods: (params = {}) => api.get('/pay/periods', { params }),
+    getPeriod: (id) => api.get(`/pay/periods/${id}`),
+    createPeriod: (data) => api.post('/pay/periods', data),
+    updatePeriodStatus: (id, status) => api.put(`/pay/periods/${id}/status`, { status }),
+
+    // Records (เงินเดือนรายบุคคล)
+    getRecords: (params = {}) => api.get('/pay/records', { params }),
+    getRecord: (id) => api.get(`/pay/records/${id}`),
+
+    // Calculate (คำนวณเงินเดือน)
+    calculatePeriod: (periodId) => api.post('/pay/calculate', { period_id: periodId }),
+
+    // Items (ปรับรายการ)
+    adjustItem: (data) => api.post('/pay/items', data),
+    deleteItem: (id) => api.delete(`/pay/items/${id}`),
+
+    // Item Types (หัวข้อรายได้/เงินหัก)
+    getItemTypes: () => api.get('/pay/item-types'),
+    createItemType: (data) => api.post('/pay/item-types', data),
+    updateItemType: (id, data) => api.put(`/pay/item-types/${id}`, data),
+    deleteItemType: (id) => api.delete(`/pay/item-types/${id}`),
+
+    // Salary Advances (เบิกเงินล่วงหน้า)
+    getAdvances: (params = {}) => api.get('/pay/advances', { params }),
+    getAdvanceCeiling: (empId, periodMonth) => api.get(`/pay/advances/${empId}/ceiling`, { params: { period_month: periodMonth } }),
+    createAdvance: (data) => api.post('/pay/advances', data),
+    approveAdvance: (id, data) => api.put(`/pay/advances/${id}/approve`, data),
+
+    // Loans (เงินกู้ยืม)
+    getLoans: (params = {}) => api.get('/pay/loans', { params }),
+    getLoan: (id) => api.get(`/pay/loans/${id}`),
+    createLoan: (data) => api.post('/pay/loans', data),
+    updateLoan: (id, data) => api.put(`/pay/loans/${id}`, data),
+
+    // Certificates (เอกสาร)
+    getCertificates: (params = {}) => api.get('/pay/certificates', { params }),
+    getCertificate: (id) => api.get(`/pay/certificates/${id}`),
+    createCertificate: (data) => api.post('/pay/certificates', data),
+    signCertificate: (id, data) => api.put(`/pay/certificates/${id}/sign`, data),
+    rejectCertificate: (id, reason) => api.put(`/pay/certificates/${id}/reject`, { reason }),
+
+    // Bonuses (โบนัส)
+    getBonuses: (params = {}) => api.get('/pay/bonuses', { params }),
+    calculateBonuses: (data) => api.post('/pay/bonuses/calculate', data),
+    updateBonus: (id, data) => api.put(`/pay/bonuses/${id}`, data),
+    approveBonuses: (data) => api.post('/pay/bonuses/approve', data),
+
+    // OT Types (ประเภท OT)
+    getOtTypes: (params = {}) => api.get('/pay/ot-types', { params }),
+};

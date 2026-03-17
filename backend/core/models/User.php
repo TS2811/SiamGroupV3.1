@@ -83,8 +83,9 @@ class User extends BaseModel
         $refreshToken = createRefreshToken($tokenData);
 
         // 7. ดึง Menu Tree + Permissions
-        $menuTree    = $this->getMenuTree($employee['level_id'] ?? null, $user['id']);
-        $permissions = $this->getPermissions($employee['level_id'] ?? null, $user['id']);
+        $isAdmin     = (bool)$user['is_admin'];
+        $menuTree    = $this->getMenuTree($employee['level_id'] ?? null, $user['id'], $isAdmin);
+        $permissions = $this->getPermissions($employee['level_id'] ?? null, $user['id'], $isAdmin);
 
         // 8. สร้าง user object สำหรับ frontend
         $userObj = [
@@ -200,9 +201,23 @@ class User extends BaseModel
 
     /**
      * ดึง Menu Tree ตาม Level + User Override
+     * Admin เห็นทุกเมนู
      */
-    public function getMenuTree(?int $levelId, int $userId): array
+    public function getMenuTree(?int $levelId, int $userId, bool $isAdmin = false): array
     {
+        // Admin → return ทุกเมนูที่ active
+        if ($isAdmin) {
+            $sql = "
+                SELECT DISTINCT
+                    a.id, a.slug, a.name_th, a.name_en, a.icon,
+                    a.parent_id, a.type, a.module, a.route, a.sort_order
+                FROM core_app_structure a
+                WHERE a.is_active = 1
+                ORDER BY a.sort_order ASC
+            ";
+            return $this->query($sql);
+        }
+
         $sql = "
             SELECT DISTINCT
                 a.id, a.slug, a.name_th, a.name_en, a.icon,
@@ -238,9 +253,21 @@ class User extends BaseModel
 
     /**
      * ดึง Action Permissions
+     * Admin ได้ทุก permission
      */
-    public function getPermissions(?int $levelId, int $userId): array
+    public function getPermissions(?int $levelId, int $userId, bool $isAdmin = false): array
     {
+        // Admin → return ทุก action ที่ active
+        if ($isAdmin) {
+            $sql = "
+                SELECT DISTINCT
+                    act.id, act.app_structure_id, act.action_code, act.name_th
+                FROM core_app_actions act
+                WHERE act.is_active = 1
+            ";
+            return $this->query($sql);
+        }
+
         $sql = "
             SELECT DISTINCT
                 act.id, act.app_structure_id, act.action_code, act.name_th

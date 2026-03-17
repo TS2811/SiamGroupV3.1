@@ -210,7 +210,7 @@ export default function DashboardPage() {
             <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1.5} sx={{ mb: 2.5 }}>
                 <Box>
                     <Typography variant="h5" fontWeight={700}>สวัสดี, {displayName} 👋</Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" component="span" sx={{ display: 'block' }}>
                         {new Date().toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                         {user?.employee?.company_name && (
                             <Chip label={user.employee.company_name} size="small" variant="outlined" color="primary" sx={{ ml: 1, height: 20, fontSize: 10 }} />

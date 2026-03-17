@@ -111,20 +111,36 @@ switch ($resource) {
                 jsonError($e->getMessage(), 'UPDATE_ERROR', 400);
             }
         } elseif ($method === 'POST' && $resourceId && $action === 'documents') {
-            // POST /api/hrm/employees/{id}/documents — Upload doc
+            // POST /api/hrm/employees/{id}/documents — Upload doc → Google Drive
             // NOTE: File upload ใช้ multipart/form-data
             if (empty($_FILES['file'])) jsonError('กรุณาแนบไฟล์', 'VALIDATION', 422);
 
             $file = $_FILES['file'];
-            $uploadDir = __DIR__ . '/../uploads/documents/';
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+            $filePath = '';
 
-            $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-            $newName = 'doc_' . $resourceId . '_' . time() . '.' . $ext;
-            $filePath = 'uploads/documents/' . $newName;
+            // Try Google Drive first, fallback to local
+            $gdriveHelper = __DIR__ . '/../gdrive_helper.php';
+            if (file_exists($gdriveHelper)) {
+                try {
+                    require_once $gdriveHelper;
+                    $folderParts = ['HRM', 'documents', 'emp_' . $resourceId];
+                    $filePath = gdrive_uploadFile($file['tmp_name'], $file['name'], $folderParts);
+                } catch (Exception $e) {
+                    error_log('GDrive upload failed, falling back to local: ' . $e->getMessage());
+                    $filePath = ''; // fallback below
+                }
+            }
 
-            if (!move_uploaded_file($file['tmp_name'], $uploadDir . $newName)) {
-                jsonError('อัปโหลดไฟล์ไม่สำเร็จ', 'UPLOAD_ERROR', 500);
+            // Fallback: local storage
+            if (empty($filePath)) {
+                $uploadDir = __DIR__ . '/../uploads/documents/';
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $newName = 'doc_' . $resourceId . '_' . time() . '.' . $ext;
+                $filePath = 'uploads/documents/' . $newName;
+                if (!move_uploaded_file($file['tmp_name'], $uploadDir . $newName)) {
+                    jsonError('อัปโหลดไฟล์ไม่สำเร็จ', 'UPLOAD_ERROR', 500);
+                }
             }
 
             $docId = $empModel->createDocument([
@@ -138,8 +154,43 @@ switch ($resource) {
                 'uploaded_by'   => $user->sub,
             ]);
             jsonSuccess(['id' => $docId], 'อัปโหลดเอกสารสำเร็จ', 201);
+        } elseif ($method === 'GET' && $resourceId && $action === 'documents' && $actionId && ($parts[3] ?? '') === 'download') {
+            // GET /api/hrm/employees/{id}/documents/{docId}/download — Stream file
+            $doc = $empModel->getDocument($actionId);
+            if (!$doc) jsonError('ไม่พบเอกสาร', 'NOT_FOUND', 404);
+
+            $filePath = $doc['file_path'];
+            if (str_starts_with($filePath, 'gdrive://')) {
+                require_once __DIR__ . '/../gdrive_helper.php';
+                gdrive_streamFile($filePath);
+                exit;
+            } else {
+                // Local file
+                $fullPath = __DIR__ . '/../' . $filePath;
+                if (!file_exists($fullPath)) jsonError('ไม่พบไฟล์', 'NOT_FOUND', 404);
+                header('Content-Type: ' . ($doc['mime_type'] ?: 'application/octet-stream'));
+                header('Content-Disposition: inline; filename="' . $doc['file_name'] . '"');
+                header('Content-Length: ' . filesize($fullPath));
+                readfile($fullPath);
+                exit;
+            }
         } elseif ($method === 'DELETE' && $resourceId && $action === 'documents' && $actionId) {
             // DELETE /api/hrm/employees/{id}/documents/{docId}
+            // Delete file from GDrive or local before removing DB record
+            $doc = $empModel->getDocument($actionId);
+            if ($doc && !empty($doc['file_path'])) {
+                if (str_starts_with($doc['file_path'], 'gdrive://')) {
+                    try {
+                        require_once __DIR__ . '/../gdrive_helper.php';
+                        gdrive_deleteFile($doc['file_path']);
+                    } catch (Exception $e) {
+                        error_log('GDrive delete failed: ' . $e->getMessage());
+                    }
+                } else {
+                    $localPath = __DIR__ . '/../' . $doc['file_path'];
+                    if (file_exists($localPath)) @unlink($localPath);
+                }
+            }
             $empModel->deleteDocument($actionId);
             jsonSuccess(null, 'ลบเอกสารสำเร็จ');
         } else {
@@ -541,6 +592,32 @@ switch ($resource) {
             jsonSuccess(['report' => $rows]);
         } else {
             jsonError('Report not found', 'NOT_FOUND', 404);
+        }
+        break;
+
+    // ═══════════════════════════════════════
+    // FILES (Stream/Download)
+    // ═══════════════════════════════════════
+    case 'files':
+        if ($method === 'GET' && $action === 'stream') {
+            // GET /api/hrm/files/stream?file=gdrive://xxxxx
+            $filePath = $_GET['file'] ?? '';
+            if (empty($filePath)) jsonError('กรุณาระบุ file path', 'VALIDATION', 422);
+
+            if (str_starts_with($filePath, 'gdrive://')) {
+                require_once __DIR__ . '/../gdrive_helper.php';
+                gdrive_streamFile($filePath);
+                exit;
+            } else {
+                $fullPath = __DIR__ . '/../' . $filePath;
+                if (!file_exists($fullPath)) jsonError('ไม่พบไฟล์', 'NOT_FOUND', 404);
+                header('Content-Type: ' . (mime_content_type($fullPath) ?: 'application/octet-stream'));
+                header('Content-Disposition: inline; filename="' . basename($fullPath) . '"');
+                readfile($fullPath);
+                exit;
+            }
+        } else {
+            jsonError('Route not found', 'NOT_FOUND', 404);
         }
         break;
 

@@ -278,6 +278,18 @@ class HrmEmployee extends BaseModel
         return $this->execute("DELETE FROM hrm_employee_documents WHERE id = :id", ['id' => $docId]);
     }
 
+    /**
+     * ดึงเอกสาร 1 รายการ (สำหรับ download/delete)
+     */
+    public function getDocument(int $docId): ?array
+    {
+        $rows = $this->query(
+            "SELECT * FROM hrm_employee_documents WHERE id = :id LIMIT 1",
+            ['id' => $docId]
+        );
+        return $rows[0] ?? null;
+    }
+
     // ========================================
     // HELPERS
     // ========================================

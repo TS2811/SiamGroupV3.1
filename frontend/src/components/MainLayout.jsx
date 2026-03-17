@@ -16,6 +16,9 @@ import {
     AccountTree, Security, Tune, AdminPanelSettings,
     SpaceDashboard, AccountBalance, Group, Notifications,
     MoreHoriz, Close,
+    // ACC Icons
+    Description, AddBox, Autorenew, GridView, EditNote, CheckCircle,
+    Paid, PostAdd, FormatListBulleted, ContentCopy, NoteAdd,
 } from '@mui/icons-material';
 
 const SIDEBAR_WIDTH = 240;
@@ -29,6 +32,9 @@ const iconMap = {
     Schedule, CalendarMonth, Event, EventBusy, FactCheck, Star, BarChart,
     Receipt, Settings, Business, Store, AccountTree, Security, Tune,
     AdminPanelSettings, AccountBalance, Menu: MenuIcon, Notifications,
+    // ACC Icons
+    Description, AddBox, Autorenew, GridView, EditNote, CheckCircle, Paid,
+    PostAdd, FormatListBulleted, ContentCopy, NoteAdd,
 };
 
 function getIcon(iconName) {

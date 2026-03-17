@@ -2,9 +2,9 @@
 
 # Technical Specification Document
 
-> **Version:** 1.0 Draft
-> **Status:** 📝 Draft
-> **Last Updated:** 2026-03-05
+> **Version:** 1.0
+> **Status:** ✅ เสร็จ (ตรวจเทียบ Code จริง 2026-03-10)
+> **Last Updated:** 2026-03-10
 > **PRD Reference:** PRD #00 (Permission Architecture), PRD #01 (Main System), PRD #04 (Settings System)
 > **Author:** Software Architect
 
@@ -53,9 +53,9 @@ TSD นี้ครอบคลุม **Core Platform Infrastructure** ซึ่
 
 | Layer           | เทคโนโลยี                           | Version | หมายเหตุ                       |
 | :-------------- | :---------------------------------- | :------ | :----------------------------- |
-| **Frontend**    | React (JSX)                         | 19.x    | UI Framework                   |
-| **UI Library**  | MUI (Material UI)                   | 7.x     | Component Library + Theming    |
-| **Build Tool**  | Vite                                | 7.x     | Dev Server + Production Build  |
+| **Frontend**    | React (JSX)                         | 18.x    | UI Framework                   |
+| **UI Library**  | MUI (Material UI)                   | 6.x     | Component Library + Theming    |
+| **Build Tool**  | Vite                                | 6.x     | Dev Server + Production Build  |
 | **CSS**         | MUI `sx` prop + TailwindCSS (เสริม) | 4.x     | Hybrid Styling                 |
 | **HTTP Client** | Axios                               | 1.x     | API Communication              |
 | **Routing**     | react-router-dom                    | 7.x     | SPA Client-Side Routing        |
@@ -811,3 +811,55 @@ Flow:
 | 1   | Theme / Color Palette สำหรับ V3.1 — ใช้สีอะไร? (ตอนนี้ ref มาจาก Thailand Post) | ⏳ รอตัดสินใจ |
 | 2   | Notification Service — ใช้ Telegram Bot ตัวเดียวกับระบบเดิมหรือสร้างใหม่?       | ⏳ รอตัดสินใจ |
 | 3   | File Upload Storage — เก็บไฟล์ไว้ที่ local disk หรือใช้ Cloud Storage (S3/GCS)? | ⏳ รอตัดสินใจ |
+
+---
+
+## 9. Schema Verification Log (ตรวจเทียบ Code จริง)
+
+> ตรวจ 2026-03-10: เทียบ TSD กับ `001_core_schema.sql` + `core/index.php` + `models/*.php`
+
+### ✅ ตรงกัน (19/19 ตาราง)
+
+| Table                           | TSD    | SQL          | Status                                 |
+| :------------------------------ | :----- | :----------- | :------------------------------------- |
+| `core_companies`                | 3.2.3  | Line 13-29   | ✅ ตรงกัน                              |
+| `core_branches`                 | 3.2.4  | Line 34-50   | ✅ ตรงกัน                              |
+| `core_departments`              | 3.2.5  | Line 55-62   | ✅ ตรงกัน (ไม่มี company_id ตามแผน)    |
+| `core_company_departments`      | 3.2.6  | Line 67-73   | ✅ ตรงกัน                              |
+| `core_roles`                    | 3.2.7  | Line 78-84   | ✅ ตรงกัน                              |
+| `core_department_roles`         | 3.2.6  | Line 89-95   | ✅ ตรงกัน                              |
+| `core_levels`                   | 3.2.8  | Line 100-109 | ✅ ตรงกัน (ไม่มี department_id ตามแผน) |
+| `core_users`                    | 3.2.1  | Line 114-136 | ✅ ตรงกัน                              |
+| `core_refresh_tokens`           | 3.2.2  | Line 141-153 | ✅ ตรงกัน                              |
+| `core_app_structure`            | 3.2.9  | Line 158-173 | ✅ ตรงกัน                              |
+| `core_app_actions`              | 3.2.9  | Line 178-188 | ✅ ตรงกัน                              |
+| `core_level_permissions`        | 3.2.9  | Line 193-199 | ✅ ตรงกัน                              |
+| `core_level_action_permissions` | 3.2.9  | Line 204-210 | ✅ ตรงกัน                              |
+| `core_user_permissions`         | 3.2.9  | Line 215-224 | ✅ ตรงกัน                              |
+| `core_user_action_permissions`  | 3.2.9  | Line 229-238 | ✅ ตรงกัน                              |
+| `core_user_company_access`      | 3.2.6  | Line 243-249 | ✅ ตรงกัน                              |
+| `core_user_branch_access`       | 3.2.6  | Line 254-260 | ✅ ตรงกัน                              |
+| `core_system_config`            | 3.2.10 | Line 265-273 | ✅ ตรงกัน                              |
+| `hrm_employees`                 | Note   | Line 278-298 | ✅ ตรงกัน                              |
+
+### ✅ API Routes ตรวจแล้ว (core/index.php, 688 lines)
+
+| Group       | Routes (จาก Code จริง)                                                                                               | TSD Section | Status                                    |
+| :---------- | :------------------------------------------------------------------------------------------------------------------- | :---------- | :---------------------------------------- |
+| `auth`      | login, refresh, logout, me                                                                                           | 4.3         | ✅ มี `me` เพิ่ม (ไม่มีใน TSD เดิม)       |
+| `dashboard` | calendar/index, summary                                                                                              | 4.4         | ✅ ตรง                                    |
+| `checkin`   | status, clock (POST), history                                                                                        | 4.5         | ✅ มี `history` เพิ่ม                     |
+| `requests`  | list, leave, ot, time-correction, shift-swap, {id}/cancel, leave-types, leave-quotas                                 | 4.6         | ✅ มี `leave-types`, `leave-quotas` เพิ่ม |
+| `profile`   | index, update, password, leave-history, ot-history                                                                   | 4.7         | ✅ มี `leave-history`, `ot-history` เพิ่ม |
+| `settings`  | companies, branches, departments, roles, levels, system-config, admin-users, permissions, app-structure, app-actions | 4.8         | ✅ ตรง                                    |
+
+### ⚠️ สิ่งที่พบ (Minor Differences)
+
+| #   | สิ่งที่พบ                                        | รายละเอียด                                                             | ผลกระทบ                                             |
+| :-- | :----------------------------------------------- | :--------------------------------------------------------------------- | :-------------------------------------------------- |
+| 1   | `auth/me` API                                    | Code มี (/api/core/auth/me) แต่ TSD ไม่ได้ระบุ                         | ✅ ไม่กระทบ — ใช้สำหรับ re-auth on page reload      |
+| 2   | `checkin/history` API                            | Code มี (/api/core/checkin/history) แต่ TSD ไม่ได้ระบุ                 | ✅ ไม่กระทบ — ใช้แสดงประวัติ Check-in/out           |
+| 3   | `profile/leave-history` + `profile/ot-history`   | Code มี แต่ TSD ไม่ได้ระบุ                                             | ✅ ไม่กระทบ — ใช้แสดงประวัติใน Profile              |
+| 4   | `requests/leave-types` + `requests/leave-quotas` | Code มี แต่ TSD ยังไม่ระบุ (ใช้ในหน้า Request Center)                  | ✅ ไม่กระทบ                                         |
+| 5   | React/MUI version                                | TSD ระบุ React 19.x + MUI 7.x → Code จริงใช้ React 18.x + MUI 6.x      | ✅ แก้ไข TSD แล้ว                                   |
+| 6   | `hrm_employees.status` ENUM                      | ไม่มี `CONTRACT` → ใช้เฉพาะ PROBATION, FULL_TIME, RESIGNED, TERMINATED | ⚠️ TSD_02 อ้าง CONTRACT — ต้องตั้ง ALTER ถ้าต้องการ |

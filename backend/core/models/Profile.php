@@ -169,4 +169,31 @@ class Profile extends BaseModel
         // TODO: implement when document management is ready
         return [];
     }
+
+    // ========================================
+    // AVATAR
+    // ========================================
+
+    /**
+     * ดึง avatar_url จาก user_id
+     */
+    public function getAvatarUrl(int $userId): ?string
+    {
+        $result = $this->query(
+            "SELECT avatar_url FROM core_users WHERE id = :uid LIMIT 1",
+            ['uid' => $userId]
+        );
+        return $result[0]['avatar_url'] ?? null;
+    }
+
+    /**
+     * อัปเดต avatar_url
+     */
+    public function updateAvatarUrl(int $userId, string $avatarUrl): bool
+    {
+        return $this->execute(
+            "UPDATE core_users SET avatar_url = :url, updated_at = NOW() WHERE id = :uid",
+            ['url' => $avatarUrl, 'uid' => $userId]
+        );
+    }
 }

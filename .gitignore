@@ -26,3 +26,13 @@ npm-debug.log*
 
 # Reference docs (not for git)
 ref/
+
+# Google Drive credentials & tokens
+backend/acc/config/credentials.json
+backend/acc/config/service_account.json
+backend/acc/config/oauth_credentials.json
+backend/acc/config/oauth_web.json
+backend/acc/config/gdrive_token.json
+backend/acc/config/token_refresh.log
+backend/config/gdrive/gdrive_token.json
+backend/config/gdrive/oauth_web.json

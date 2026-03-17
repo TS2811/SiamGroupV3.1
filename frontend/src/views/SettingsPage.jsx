@@ -651,7 +651,7 @@ function AdminTab() {
                 <TextField
                     fullWidth size="small" placeholder="ค้นหาพนักงาน (ชื่อ, username, รหัส)..."
                     value={searchQuery} onChange={e => handleSearch(e.target.value)}
-                    InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }}
+                    slotProps={{ input: { startAdornment: <InputAdornment position="start"><Search /></InputAdornment> } }}
                     sx={{ mb: 2 }}
                 />
                 {searchResults.length > 0 && (
